@@ -1,0 +1,23 @@
+#cloud-config
+autoinstall:
+  version: 1
+  identity:
+    hostname: ubuntu-Lenovos
+    username: saint
+   /usr/bin/mkpassword: "$6$rounds=4096$C5Lr9Yg9y2zR3R1Z$k4X3fYQ.YhV4QKkKwltHQK9MHDg9k4xMi5qTR4nNY9PwlQWElvx1OvE4Hz2gZThpYqYjE5X0H6iYlO1H7l8K1."  # SHA-512 hash of Password123!
+  keyboard:
+    layout: us
+  locale: en_US.UTF-8
+  storage:
+    layout:
+      name: direct
+  ssh:
+    install-server: false
+  packages:
+    - vim
+    - curl
+  late-commands:
+    - ["curtin", "in-target", "--", "apt", "update"]
+    - ["curtin", "in-target", "--", "apt", "install", "-y", "git"]
+    - ["curtin", "in-target", "--", "systemctl", "enable", "ssh"]
+    - ["curtin", "in-target", "--", "systemctl", "start", "ssh"]
