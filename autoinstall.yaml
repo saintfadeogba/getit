@@ -1,23 +1,40 @@
 #cloud-config
+
 autoinstall:
   version: 1
   identity:
     hostname: ubuntu-Lenovos
-    username: saint
-   /usr/bin/mkpassword: "$6$rounds=4096$C5Lr9Yg9y2zR3R1Z$k4X3fYQ.YhV4QKkKwltHQK9MHDg9k4xMi5qTR4nNY9PwlQWElvx1OvE4Hz2gZThpYqYjE5X0H6iYlO1H7l8K1."  # SHA-512 hash of Password123!
+    username: freakdeaky
+    password: "$6$rounds=4096$C5Lr9Yg9y2zR3R1Z$k4X3fYQ.YhV4QKkKwltHQK9MHDg9k4xMi5qTR4nNY9PwlQWElvx1OvE4Hz2gZThpYqYjE5X0H6iYlO1H7l8K1."  # SHA-512 hash of Password123!
+  
   keyboard:
     layout: us
   locale: en_US.UTF-8
+
+  # Storage configuration (simplified to direct layout)
   storage:
     layout:
-      name: direct
+      name: direct  # Use 'direct' for simple, non-advanced storage layout (change if you need custom storage)
+
+  # SSH server setup
   ssh:
-    install-server: false
+    install-server: true  # Set this to 'true' to install the SSH server
+
+  # List of additional packages to install
   packages:
     - vim
     - curl
+
   late-commands:
+    # Update the apt repositories and install Git
     - ["curtin", "in-target", "--", "apt", "update"]
     - ["curtin", "in-target", "--", "apt", "install", "-y", "git"]
+
+    # Enable and start the SSH service
     - ["curtin", "in-target", "--", "systemctl", "enable", "ssh"]
     - ["curtin", "in-target", "--", "systemctl", "start", "ssh"]
+
+    # Optionally download and run a script from a URL (uncomment if needed)
+    # - ["curtin", "in-target", "--", "wget", "https://example.com/myscript.sh", "-O", "/tmp/myscript.sh"]
+    # - ["curtin", "in-target", "--", "bash", "/tmp/myscript.sh"]
+
