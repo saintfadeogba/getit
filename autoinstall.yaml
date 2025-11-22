@@ -1,40 +1,54 @@
 #cloud-config
-
 autoinstall:
   version: 1
+
   identity:
-    hostname: ubuntu-Lenovos
-    username: freakdeaky
-    password: "$6$rounds=4096$C5Lr9Yg9y2zR3R1Z$k4X3fYQ.YhV4QKkKwltHQK9MHDg9k4xMi5qTR4nNY9PwlQWElvx1OvE4Hz2gZThpYqYjE5X0H6iYlO1H7l8K1."  # SHA-512 hash of Password123!
-  
+    hostname: ubuntu-server
+    username: saintfadeogba
+    # Replace with a SHA-512 password hash produced by: mkpasswd --method=SHA-512
+    password: "$6$y2RMmH.0WtYDRDqL$stdBS4HTKhIPdBCQq04HLai8QIhZ51MFCK3cNUqez486CgAS/mv/4JEcTg414BweOqlGMYDZ2bda.B6ApwPut1"
+
+  locale: en_US.UTF-8
   keyboard:
     layout: us
-  locale: en_US.UTF-8
 
-  # Storage configuration (simplified to direct layout)
   storage:
     layout:
-      name: direct  # Use 'direct' for simple, non-advanced storage layout (change if you need custom storage)
+      name: direct
 
-  # SSH server setup
   ssh:
-    install-server: true  # Set this to 'true' to install the SSH server
+    install-server: true
 
-  # List of additional packages to install
   packages:
     - vim
     - curl
+    - git
+    - htop
+
+  user-data: |
+    #cloud-config
+    disable_root: true
+    ssh_pwauth: false
+    users:
+      - name: deploy
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        lock_passwd: false
+        passwd: "$6$y2RMmH.0WtYDRDqL$stdBS4HTKhIPdBCQq04HLai8QIhZ51MFCK3cNUqez486CgAS/mv/4JEcTg414BweOqlGMYDZ2bda.B6ApwPut1"
+        ssh_authorized_keys:
+          - "ssh-rsa AAAA... replace_with_your_pubkey"
 
   late-commands:
-    # Update the apt repositories and install Git
-    - ["curtin", "in-target", "--", "apt", "update"]
-    - ["curtin", "in-target", "--", "apt", "install", "-y", "git"]
+    # make apt operations tolerant to non-critical failures
+    - curtin in-target -- apt-get update || true
+    - curtin in-target -- apt-get -y upgrade || true
 
-    # Enable and start the SSH service
-    - ["curtin", "in-target", "--", "systemctl", "enable", "ssh"]
-    - ["curtin", "in-target", "--", "systemctl", "start", "ssh"]
+    # ensure user ssh dir and authorized_keys (if pulling from remote, validate source)
+    - curtin in-target -- mkdir -p /home/deploy/.ssh || true
+    - curtin in-target -- chown -R deploy:deploy /home/deploy/.ssh || true
+    - curtin in-target -- chmod 700 /home/deploy/.ssh || true
+    - curtin in-target -- chmod 600 /home/deploy/.ssh/authorized_keys || true
 
-    # Optionally download and run a script from a URL (uncomment if needed)
-    # - ["curtin", "in-target", "--", "wget", "https://example.com/myscript.sh", "-O", "/tmp/myscript.sh"]
-    # - ["curtin", "in-target", "--", "bash", "/tmp/myscript.sh"]
-
+    # idempotent SSH enable/start
+    - curtin in-target -- systemctl enable ssh || true
+    - curtin in-target -- systemctl start ssh || true
